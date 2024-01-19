@@ -1,0 +1,37 @@
+---
+- name: Disable Grafana repoting - 0/1
+  replace:
+    path: /usr/share/grafana/conf/defaults.ini
+    regexp: '^reporting_enabled = true'
+    replace: 'reporting_enabled = {{ grafana_reporting_enabled }}'
+
+- name: Disable Grafana repoting - 1/1
+  replace:
+    path: /etc/grafana/grafana.ini
+    regexp: '^;reporting_enabled = true'
+    replace: 'reporting_enabled = {{ grafana_reporting_enabled }}'
+
+- name: Disable Grafana analytics - 0/1
+  lineinfile:
+    path: /usr/share/grafana/conf/defaults.ini
+    insertafter: 'reporting_enabled = false'
+    line: 'enabled = {{ grafana_analytics_enabled }}'
+
+- name: Disable Grafana analytics - 1/1
+  lineinfile:
+    path: /etc/grafana/grafana.ini
+    insertafter: 'reporting_enabled = false'
+    line: 'enabled = {{ grafana_analytics_enabled }}'
+
+- name: Disable Grafana Gravatar - 0/1
+  replace:
+    path: /usr/share/grafana/conf/defaults.ini
+    regexp: '^disable_gravatar = false'
+    replace: 'disable_gravatar = {{ grafana_disable_gravatar }}'
+
+- name: Disable Grafana Gravatar - 1/1
+  replace:
+    path: /etc/grafana/grafana.ini
+    regexp: '^;disable_gravatar = false'
+    replace: 'disable_gravatar = {{ grafana_disable_gravatar }}'
+

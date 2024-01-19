@@ -1,0 +1,13 @@
+---
+- import_tasks: preinstall.yml
+- import_tasks: repo.yml
+- import_tasks: install.yml
+- import_tasks: postinstall.yml
+
+- name: Ensure Grafana service is enabled on boot
+  become: true
+  systemd:
+    daemon_reload: true
+    name: grafana-server
+    enabled: true
+    state: restarted

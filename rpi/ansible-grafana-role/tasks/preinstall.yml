@@ -1,0 +1,21 @@
+---
+- name: Assert usage of systemd as an init system
+  assert:
+    that: ansible_service_mgr == 'systemd'
+    msg: "This role only works with systemd"
+
+- name: apt Upgrade 
+  apt:
+    force_apt_get: yes
+    upgrade: dist
+
+- name: Install apt-transport-https
+  apt:
+    name: apt-transport-https
+    state: latest
+
+- name: Install software-properties-common
+  apt:
+    name: software-properties-common
+    state: latest
+

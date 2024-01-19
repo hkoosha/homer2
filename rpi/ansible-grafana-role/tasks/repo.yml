@@ -1,0 +1,33 @@
+---
+- name: Ensure apts keyrings directory
+  file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: 0755
+
+- name: Check has Grafana GPG key
+  stat:
+    path: "{{ grafana_gpg_key_dest }}"
+  register: grafana_gpg_key_file_stat
+
+- name: Download Grafana GPG key
+  get_url:
+    url: "{{ grafana_gpg_key_url }}"
+    dest: "/tmp/grafana_key.gpg"
+  when: not grafana_gpg_key_file_stat.stat.exists
+
+- name: Import Download Grafana GPG key
+  command: bash -c 'cat /tmp/grafana_key.gpg | gpg --dearmor > {{ grafana_gpg_key_dest }}'
+  when: not grafana_gpg_key_file_stat.stat.exists
+
+- name: Clean up Grafana GPG key file
+  file:
+    path: "/tmp/grafana_key.gpg"
+    state: absent
+
+- name: Add Grafana repository
+  apt_repository:
+    repo: "{{ grafana_apt_repo }}"
+    state: present
+    update_cache: yes
+

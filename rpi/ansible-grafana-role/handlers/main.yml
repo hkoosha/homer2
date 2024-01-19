@@ -1,0 +1,8 @@
+# handlers file for Grafana
+---
+- name: Restart Grafana service
+  become: true
+  systemd:
+    daemon_reload: true
+    name: grafana
+    state: restarted

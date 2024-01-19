@@ -1,0 +1,8 @@
+---
+grafana_gpg_key_url: "https://apt.grafana.com/gpg.key"
+grafana_gpg_key_dest: "/etc/apt/keyrings/grafana.gpg"
+grafana_apt_repo: "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main"
+grafana_reporting_enabled: "false"
+grafana_analytics_enabled: "false"
+grafana_disable_gravatar: "true"
+

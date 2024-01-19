@@ -1,0 +1,8 @@
+- name: Homer2 Playbook
+  hosts: homer2main
+  become: yes
+
+  roles:
+    - "ansible-victoriametrics-role"
+    - "ansible-grafana-role"
+
