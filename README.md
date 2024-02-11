@@ -1,9 +1,9 @@
 ## What?
 
-Homer2, Running on a Raspberry Pi Pico, reads air quality monitoring sensors and sends to
-VictoriaMetrics / Prometheus and finally graphs them on Grafana.
+Homer2, running on a Raspberry Pi Pico, reads air quality monitoring sensors and sends 
+the readings to Victoria Metrics, and finally graphs them on Grafana.
 
-Raspberry Pi ansible configuration also included (for Grafana and VictoriaMetrics).
+Raspberry Pi Ansible configuration also included (for Grafana and Victoria Metrics).
 
 Sensors:
 
