@@ -85,7 +85,7 @@ Senseair/Sunrise was available from Digikey.
 
 ## History
 
-Homer1 ran on ESP32, Homer2 is a port to raspberry pi pico.
+[Homer1](https://github.com/hkoosha/homer1) ran on ESP32, Homer2 is a port to raspberry pi pico.
 
 ## Screenshots
 
