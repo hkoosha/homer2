@@ -8,10 +8,7 @@ namespace homer2::net {
 
     uint8_t dns_max_tries() noexcept;
 
-
     uint8_t tcp_max_tries() noexcept;
-
-    uint64_t tcp_write_timeout_millis() noexcept;
 
 
     const char* victoria_addr() noexcept;

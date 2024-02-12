@@ -137,15 +137,8 @@ namespace homer2 {
             throw std::runtime_error{"dns max tries exhausted"};
         }
 
-        if (this->_connectionStartMillis > 0) {
+        if (this->_connection != internal::ConnectionStatus::DISCONNECTED) {
             D(4, TAG, "connection in progress");
-
-            // if (is_expired(this->_connectionStartMillis, net::tcp_write_timeout_millis())) {
-            //     E(TAG, "tcp write timeout");
-            //     this->incTcpErr();
-            //     this->close();
-            // }
-
             return;
         }
 
@@ -398,6 +391,8 @@ namespace homer2 {
 
         D(5, TAG, "opening tcp");
 
+        this->_connection = internal::ConnectionStatus::CONNECTING;
+
         this->_tcpPcb = tcp_new_ip_type(IP_GET_TYPE(&this->_ip));
         if (!this->_tcpPcb) {
             E(TAG, "failed to create tcp pcb");
@@ -414,9 +409,9 @@ namespace homer2 {
                 void* const arg,
                 struct tcp_pcb* const tcpPcb
             ) {
-                E(TAG, "connection timeout");
-
                 auto that = static_cast<Homer2Pusher*>(arg);
+
+                E(TAG, "connection timeout");
                 that->incTcpErr();
                 return that->close();
             },
@@ -430,16 +425,16 @@ namespace homer2 {
                 struct tcp_pcb* const tcpPcb,
                 const u16_t len
             ) {
-                I(TAG, "tcp sent, wrote to sever: " << std::to_string(len));
                 auto that = static_cast<Homer2Pusher*>(arg);
 
-
+                I(TAG, "tcp sent, wrote to sever: " << std::to_string(len));
                 if (len == that->_writeBuffer.size()) {
                     that->resetTcpErr();
                     return that->close();
                 }
-
-                return static_cast<err_t>(ERR_OK);
+                else {
+                    return static_cast<err_t>(ERR_OK);
+                }
             }
         );
 
@@ -463,9 +458,11 @@ namespace homer2 {
                 void* const arg,
                 const err_t err
             ) {
+                auto that = static_cast<Homer2Pusher*>(arg);
+
                 E(TAG, "TCP fatal error: " << translate(err));
                 if (ERR_ABRT != err)
-                    static_cast<Homer2Pusher*>(arg)->close();
+                    that->close();
             }
         );
 
@@ -477,10 +474,7 @@ namespace homer2 {
 
         D(5, TAG, "connecting tcp");
 
-        this->_connectionStartMillis = now();
-
         cyw43_arch_lwip_begin();
-        this->_connection = internal::ConnectionStatus::CONNECTING;
         const err_t err = tcp_connect(
             this->_tcpPcb,
             &this->_ip,
@@ -547,8 +541,6 @@ namespace homer2 {
             return false;
         }
 
-        // err_t tcpErr;
-
         cyw43_arch_lwip_begin();
         const auto bodyErr = tcp_write(
             this->_tcpPcb,
@@ -556,8 +548,6 @@ namespace homer2 {
             this->_writeBuffer.size(),
             TCP_WRITE_FLAG_COPY
         );
-        // if (ERR_OK == bodyErr)
-        //     tcpErr = tcp_output(this->_tcpPcb);
         cyw43_arch_lwip_end();
 
         if (ERR_OK != bodyErr) {
@@ -570,16 +560,6 @@ namespace homer2 {
             D(0, TAG, "wrote to server");
         }
 
-        // if (ERR_OK != tcpErr) {
-        //     E(TAG, "could not flush tcp: " << std::to_string(bodyErr));
-        //     this->close();
-        //     this->incTcpErr();
-        //     return false;
-        // }
-        // else {
-        //     D(4, TAG, "flushed tcp");
-        // }
-
         this->close();
 
         return true;
@@ -588,6 +568,12 @@ namespace homer2 {
     err_t Homer2Pusher::close() noexcept {
 
         D(5, TAG, "tcp close");
+
+        if (this->_connection == internal::ConnectionStatus::DISCONNECTED) {
+            D(5, TAG, "already disconnected");
+            return ERR_OK;
+        }
+        this->_connection = internal::ConnectionStatus::DISCONNECTED;
 
         if (this->_tcpPcb != nullptr) {
 
@@ -612,24 +598,20 @@ namespace homer2 {
             }
         }
 
-        this->_connectionStartMillis = 0;
         this->_lastPushMillis = now();
-        this->_connection = internal::ConnectionStatus::DISCONNECTED;
         return ERR_OK;
     }
 
 
     [[nodiscard]]
-    const std::string& Homer2Pusher::ipAddr() noexcept {
+    std::string Homer2Pusher::ipAddr() const noexcept {
 
-        if (this->_ipStr.empty()) {
-            cyw43_arch_lwip_begin();
-            const char* const addr = ipaddr_ntoa(&this->_ip);
-            this->_ipStr = std::move(std::string{addr});
-            cyw43_arch_lwip_end();
-        }
+        cyw43_arch_lwip_begin();
+        const char* const addr = ipaddr_ntoa(&this->_ip);
+        std::string ipStr = std::move(std::string{addr});
+        cyw43_arch_lwip_end();
 
-        return this->_ipStr;
+        return std::move(ipStr);
     }
 
     void Homer2Pusher::incTcpErr() noexcept {

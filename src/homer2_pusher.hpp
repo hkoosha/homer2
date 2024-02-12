@@ -73,7 +73,7 @@ namespace homer2 {
         void resetDnsErr() noexcept;
 
         [[nodiscard]]
-        const std::string& ipAddr() noexcept;
+        std::string ipAddr() const noexcept;
 
         const uint64_t _pushStartAfterTimestamp;
         const uint64_t _pushFrequencyMillis;
@@ -85,11 +85,8 @@ namespace homer2 {
         const char* _addr;
         const uint16_t _port;
         ip_addr_t _ip{.addr = IPADDR_ANY};
-        std::string _ipStr{};
 
         struct tcp_pcb* _tcpPcb{nullptr};
-
-        uint64_t _connectionStartMillis{0};
         internal::ConnectionStatus _connection{internal::ConnectionStatus::DISCONNECTED};
 
         const std::string _header;

@@ -28,15 +28,9 @@ namespace homer2::net {
         return static_cast<uint8_t>(HOMER2_DNS_MAX_TRIES);
     }
 
-
     uint8_t tcp_max_tries() noexcept {
 
         return static_cast<uint8_t>(HOMER2_TCP_MAX_TRIES);
-    }
-
-    uint64_t tcp_write_timeout_millis() noexcept {
-
-        return static_cast<uint64_t>(HOMER2_TCP_WRITE_TIMEOUT_MILLIS);
     }
 
 
