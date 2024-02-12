@@ -26,7 +26,8 @@ namespace homer2 {
         Homer2Pusher(
             const char* addr,
             uint16_t port,
-            uint64_t pushFrequencyMillis
+            uint64_t pushFrequencyMillis,
+            uint64_t pushStartAfterTimestamp
         );
 
         void push(
@@ -74,6 +75,7 @@ namespace homer2 {
         [[nodiscard]]
         const std::string& ipAddr() noexcept;
 
+        const uint64_t _pushStartAfterTimestamp;
         const uint64_t _pushFrequencyMillis;
         uint64_t _lastPushMillis{0};
         // uint8_t _httpErrors{0};

@@ -111,11 +111,13 @@ namespace homer2 {
     Homer2Pusher::Homer2Pusher(
         const char* addr,
         const uint16_t port,
-        uint64_t pushFrequencyMillis
+        uint64_t pushFrequencyMillis,
+        uint64_t pushStartAfterTimestamp
     ) : _addr{addr},
         _port{port},
         _pushFrequencyMillis{pushFrequencyMillis},
-        _header{header(addr, port)} {
+        _header{header(addr, port)},
+        _pushStartAfterTimestamp{pushStartAfterTimestamp} {
     }
 
     void Homer2Pusher::push(
@@ -157,6 +159,12 @@ namespace homer2 {
         if (!this->resolve())
             return;
 
+        if (now() <= this->_pushStartAfterTimestamp) {
+            I(TAG, "still in warmup period, not writing to server. Left: "
+                << (this->_pushStartAfterTimestamp - now()) << "ms");
+            return;
+        }
+
         this->fillBuffer(data);
 
         this->tryPush();
@@ -171,76 +179,95 @@ namespace homer2 {
         this->_body = "[";
 
         if (data.sgp40Data().has_value()) {
-            this->_body += R"({"metric":"voc_index","tags":{"agent":"homer2","sensor":"sgp40"},"value":)";
+            this->_body +=
+                R"({"metric":"voc_index","tags":{"agent":"homer2","sensor":"sgp40"},"value":)";
             this->_body += std::to_string(data.sgp40Data()->getVocIndex());
             this->_body += "},";
         }
 
         if (data.sunriseData().has_value()) {
-            this->_body += R"({"metric":"co2","tags":{"agent":"homer2","sensor":"sunrise"},"value":)";
+            this->_body +=
+                R"({"metric":"co2","tags":{"agent":"homer2","sensor":"sunrise"},"value":)";
             this->_body += std::to_string(data.sunriseData()->getCo2Ppm());
             this->_body += "},";
         }
 
         if (data.bmp3xxData().has_value()) {
-            this->_body += R"({"metric":"pressure","tags":{"agent":"homer2","sensor":"bmp3xx"},"value":)";
+            this->_body +=
+                R"({"metric":"pressure","tags":{"agent":"homer2","sensor":"bmp3xx"},"value":)";
             this->_body += std::to_string(data.bmp3xxData()->getPressureHPa());
             this->_body += "},";
-            this->_body += R"({"metric":"temperature","tags":{"agent":"homer2","sensor":"bmp3xx"},"value":)";
+            this->_body +=
+                R"({"metric":"temperature","tags":{"agent":"homer2","sensor":"bmp3xx"},"value":)";
             this->_body += std::to_string(data.bmp3xxData()->getTemperatureCelsius());
             this->_body += "},";
         }
 
         if (data.bme68xData().has_value()) {
-            this->_body += R"({"metric":"pressure","tags":{"agent":"homer2","sensor":"bme68x"},"value":)";
+            this->_body +=
+                R"({"metric":"pressure","tags":{"agent":"homer2","sensor":"bme68x"},"value":)";
             this->_body += std::to_string(data.bme68xData()->getPressureHPa());
             this->_body += "},";
-            this->_body += R"({"metric":"temperature","tags":{"agent":"homer2","sensor":"bme68x"},"value":)";
+            this->_body +=
+                R"({"metric":"temperature","tags":{"agent":"homer2","sensor":"bme68x"},"value":)";
             this->_body += std::to_string(data.bme68xData()->getTemperatureCelsius());
             this->_body += "},";
-            this->_body += R"({"metric":"humidity","tags":{"agent":"homer2","sensor":"bme68x"},"value":)";
+            this->_body +=
+                R"({"metric":"humidity","tags":{"agent":"homer2","sensor":"bme68x"},"value":)";
             this->_body += std::to_string(data.bme68xData()->getRelativeHumidityPercent());
             this->_body += "},";
-            this->_body += R"({"metric":"gas_resistance","tags":{"agent":"homer2","sensor":"bme68x"},"value":)";
+            this->_body +=
+                R"({"metric":"gas_resistance","tags":{"agent":"homer2","sensor":"bme68x"},"value":)";
             this->_body += std::to_string(data.bme68xData()->getGasResistanceOhms());
             this->_body += "},";
         }
 
         if (data.sht4xData().has_value()) {
-            this->_body += R"({"metric":"temperature","tags":{"agent":"homer2","sensor":"sht4x"},"value":)";
+            this->_body +=
+                R"({"metric":"temperature","tags":{"agent":"homer2","sensor":"sht4x"},"value":)";
             this->_body += std::to_string(data.sht4xData()->getTemperatureCelsius());
             this->_body += "},";
-            this->_body += R"({"metric":"humidity","tags":{"agent":"homer2","sensor":"sht4x"},"value":)";
+            this->_body +=
+                R"({"metric":"humidity","tags":{"agent":"homer2","sensor":"sht4x"},"value":)";
             this->_body += std::to_string(data.sht4xData()->getRelativeHumidityPercent());
             this->_body += "},";
         }
 
         if (data.pmsx00xData().has_value()) {
-            this->_body += R"({"metric":"pm1_0","tags":{"agent":"homer2","sensor":"pmsx00x","cat":"env"},"value":)";
+            this->_body +=
+                R"({"metric":"pm1_0","tags":{"agent":"homer2","sensor":"pmsx00x","cat":"env"},"value":)";
             this->_body += std::to_string(data.pmsx00xData()->getPm10Env());
             this->_body += "},";
-            this->_body += R"({"metric":"pm2_5","tags":{"agent":"homer2","sensor":"pmsx00x","cat":"env"},"value":)";
+            this->_body +=
+                R"({"metric":"pm2_5","tags":{"agent":"homer2","sensor":"pmsx00x","cat":"env"},"value":)";
             this->_body += std::to_string(data.pmsx00xData()->getPm25Env());
             this->_body += "},";
-            this->_body += R"({"metric":"pm10_0","tags":{"agent":"homer2","sensor":"pmsx00x","cat":"env"},"value":)";
+            this->_body +=
+                R"({"metric":"pm10_0","tags":{"agent":"homer2","sensor":"pmsx00x","cat":"env"},"value":)";
             this->_body += std::to_string(data.pmsx00xData()->getPm100Env());
             this->_body += "},";
-            this->_body += R"({"metric":"ptc0_3","tags":{"agent":"homer2","sensor":"pmsx00x","cat":"env"},"value":)";
+            this->_body +=
+                R"({"metric":"ptc0_3","tags":{"agent":"homer2","sensor":"pmsx00x","cat":"env"},"value":)";
             this->_body += std::to_string(data.pmsx00xData()->getParticles03());
             this->_body += "},";
-            this->_body += R"({"metric":"ptc0_5","tags":{"agent":"homer2","sensor":"pmsx00x","cat":"env"},"value":)";
+            this->_body +=
+                R"({"metric":"ptc0_5","tags":{"agent":"homer2","sensor":"pmsx00x","cat":"env"},"value":)";
             this->_body += std::to_string(data.pmsx00xData()->getParticles05());
             this->_body += "},";
-            this->_body += R"({"metric":"ptc1_0","tags":{"agent":"homer2","sensor":"pmsx00x","cat":"env"},"value":)";
+            this->_body +=
+                R"({"metric":"ptc1_0","tags":{"agent":"homer2","sensor":"pmsx00x","cat":"env"},"value":)";
             this->_body += std::to_string(data.pmsx00xData()->getParticles10());
             this->_body += "},";
-            this->_body += R"({"metric":"ptc2_5","tags":{"agent":"homer2","sensor":"pmsx00x","cat":"env"},"value":)";
+            this->_body +=
+                R"({"metric":"ptc2_5","tags":{"agent":"homer2","sensor":"pmsx00x","cat":"env"},"value":)";
             this->_body += std::to_string(data.pmsx00xData()->getParticles25());
             this->_body += "},";
-            this->_body += R"({"metric":"ptc5_0","tags":{"agent":"homer2","sensor":"pmsx00x","cat":"env"},"value":)";
+            this->_body +=
+                R"({"metric":"ptc5_0","tags":{"agent":"homer2","sensor":"pmsx00x","cat":"env"},"value":)";
             this->_body += std::to_string(data.pmsx00xData()->getParticles50());
             this->_body += "},";
-            this->_body += R"({"metric":"ptc10_0","tags":{"agent":"homer2","sensor":"pmsx00x","cat":"env"},"value":)";
+            this->_body +=
+                R"({"metric":"ptc10_0","tags":{"agent":"homer2","sensor":"pmsx00x","cat":"env"},"value":)";
             this->_body += std::to_string(data.pmsx00xData()->getParticles100());
             this->_body += "},";
         }

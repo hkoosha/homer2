@@ -27,7 +27,7 @@ namespace homer2::sensor::sgp40 {
 
         SGP40Data(
             uint16_t rawValue,
-            uint32_t vocIndex
+            int32_t vocIndex
         ) noexcept;
 
 
@@ -37,12 +37,12 @@ namespace homer2::sensor::sgp40 {
 
         [[maybe_unused]]
         [[nodiscard]]
-        uint32_t getVocIndex() const noexcept;
+        int32_t getVocIndex() const noexcept;
 
     private:
 
         uint16_t _rawValue;
-        uint32_t _vocIndex;
+        int32_t _vocIndex;
 
     };
 

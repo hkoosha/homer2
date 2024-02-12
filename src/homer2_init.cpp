@@ -63,6 +63,11 @@ namespace homer2::net {
         return static_cast<uint64_t>(HOMER2_VICTORIA_FREQUENCY_MILLIS);
     }
 
+    uint64_t victoria_metrics_write_initial_delay_millis() noexcept {
+
+        return HOMER2_VICTORIA_WRITE_INITIAL_DELAY_MILLIS;
+    }
+
 
     bool is_victoria_metrics_enabled() noexcept {
 
