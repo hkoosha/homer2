@@ -15,6 +15,12 @@ add_subdirectory(homer2_sensor)
 
 configure_file(src/homer2_config.h.in src/homer2_config.h)
 
+if ($ENV{HOMER2_VICTORIA_WRITE_INITIAL_DELAY_MILLIS_DISABLE} STREQUAL "true")
+    set(_HOMER2_VICTORIA_WRITE_INITIAL_DELAY_MILLIS_DISABLE true)
+else ()
+    set(_HOMER2_VICTORIA_WRITE_INITIAL_DELAY_MILLIS_DISABLE false)
+endif ()
+
 add_executable(homer2 homer2.c)
 target_compile_definitions(
     homer2 PRIVATE
@@ -23,6 +29,7 @@ target_compile_definitions(
     WIFI_COUNTRY=\"${WIFI_COUNTRY}\"
     HOMER2_VICTORIA_ADDR=\"${HOMER2_VICTORIA_ADDR}\"
     HOMER2_VICTORIA_PORT=\"${HOMER2_VICTORIA_PORT}\"
+    HOMER2_VICTORIA_WRITE_INITIAL_DELAY_MILLIS_DISABLE=${_HOMER2_VICTORIA_WRITE_INITIAL_DELAY_MILLIS_DISABLE}
 )
 target_sources(
     homer2 PRIVATE

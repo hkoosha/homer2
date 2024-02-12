@@ -45,8 +45,8 @@ namespace {
 
     // Values are the longest in their category, selected for their length. The value itself is
     // irrelevant.
-    const size_t TAG_WIDTH = strlen("PMSx00x");
-    const size_t TITLE_WIDTH = strlen("Relative Humidity");
+    const int TAG_WIDTH = static_cast<int>(strlen("PMSx00x"));
+    const int TITLE_WIDTH = static_cast<int>(strlen("Relative Humidity"));
 
     void homer2_main_loop_delay() {
 
@@ -66,12 +66,18 @@ namespace {
         const char* const unit,
         const T value
     ) {
-        I(TAG, ""
+        const auto original_flags = std::cout.flags();
+        const auto original_width = std::cout.width();
+        const auto original_fill = std::cout.fill();
+        std::cout
             << std::setw(TAG_WIDTH) << std::setfill(' ') << std::left << tag
             << " | "
             << std::setw(TITLE_WIDTH) << std::setfill(' ') << std::left << title
             << ": " << value << unit
-        );
+            << std::endl;
+        std::cout.flags(original_flags);
+        std::cout.width(original_width);
+        std::cout.fill(original_fill);
     }
 
     void print(
