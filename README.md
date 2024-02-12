@@ -20,41 +20,41 @@ Sensors:
 2. Setup Raspberry Pico SDK locally.
 3. Build the project. Example:
 
-```bash
-# You need to put your actuall wifi's name, password and your own country code here.
-# You need to put your raspberry PIs DDNS address here, connecting directly to IPs is planned.
-cmake -DWIFI_SSID="your_wifi_name" \
-      -DWIFI_PASSWORD="your_wifi_password" \
-      -DWIFI_COUNTRY="DE" \
-      -DHOMER2_VICTORIA_ADDR="your_raspberry_pi_DDNS_address"
-      -DHOMER2_VICTORIA_PORT=4242
-```
+   ```bash
+   # You need to put your actual Wifi name, password and your own country code here.
+   # You need to put your raspberry PIs DDNS address here, connecting directly to IPs is planned.
+   cmake -DWIFI_SSID="your_wifi_name" \
+         -DWIFI_PASSWORD="your_wifi_password" \
+         -DWIFI_COUNTRY="DE" \
+         -DHOMER2_VICTORIA_ADDR="ip_address__OR__your_raspberry_pi_DDNS_address"
+         -DHOMER2_VICTORIA_PORT=4242
+   ```
 4. Flash the image to Pico (I transfer the image to a Raspberry PI and flash from there,
    faster than usb-ip, safer than connecting Pico to my PC):
 
-```bash
-# You need to adjust YOUR_OPEN_OCD_PATH_HERE to wherever you installed openocd.
-# You need to adjust PATH_TO_BUILD to the path of the project's directory.
-sudo openocd \
-      -f /YOUR_OPEN_OCD_PATH_HERE/openocd/share/openocd/scripts/interface/cmsis-dap.cfg \
-      -f /YOUR_OPEN_OCD_PATH_HERE/openocd/share/openocd/scripts/target/rp2040.cfg \
-      -c "adapter speed 20000" \
-      -c "program PATH_TO_BUILD/build/homer2.elf verify reset exit"
-```
+   ```bash
+   # You need to adjust YOUR_OPEN_OCD_PATH_HERE to wherever you installed openocd.
+   # You need to adjust PATH_TO_BUILD to the path of the project's directory.
+   sudo openocd \
+         -f /YOUR_OPEN_OCD_PATH_HERE/openocd/share/openocd/scripts/interface/cmsis-dap.cfg \
+         -f /YOUR_OPEN_OCD_PATH_HERE/openocd/share/openocd/scripts/target/rp2040.cfg \
+         -c "adapter speed 20000" \
+         -c "program PATH_TO_BUILD/build/homer2.elf verify reset exit"
+   ```
 
 5. Connect the sensors to the pins you configured in [configs](./src/homer2_config.h.in).
-   All I2C sensors go to the same pins. PMS5003 goes to UART 1 pins, angain configured
+   All I2C sensors go to the same pins. PMS5003 goes to UART 1 pins, again configured
    in [configs](./src/homer2_config.h.in).
 6. Connect the power to Pico and see the readings in serial console or on
    grafana.
-7. Import the Grafana [dashboard](./rpi/homer2_grafana_dashboard.json) into Grafana. Currnetly
+7. Import the Grafana [dashboard](./rpi/homer2_grafana_dashboard.json) into Grafana. Currently,
    this is a manual process, later to be added to Ansible.
 
 ## Configuration 
 
-All the configurables can be found in [configs](./src/homer2_config.h.in):
+All the configurable options can be found in [configs](./src/homer2_config.h.in):
 
-If you don't want pico to connect to Wifi or write to Victoria Metrics,
+If you don't want pico to connect to Wi-Fi or write to Victoria Metrics,
 set `HOMER2_WIFI` to `false`.<br>
 
 To disable Unicode characters on serial console output,
@@ -71,7 +71,7 @@ You can disable any of the sensors if you don't have them:
 ## Where to get sensors from?
 
 I bought almost all of them from Amazon, only from Adafruit or Sparkfun (sensors
-from other cheaper vendors produced inaacurate results or didn't work at all).
+from other cheaper vendors produced inaccurate results or didn't work at all).
 
 Senseair/Sunrise was available from Digikey.
 

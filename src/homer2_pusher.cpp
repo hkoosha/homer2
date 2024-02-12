@@ -6,88 +6,102 @@
 
 #include "homer2_pusher.hpp"
 
-namespace {
+namespace homer2 {
 
-    const char* const TAG = "Pusher";
+    namespace {
 
-    const char* translate(
-        const err_t err
-    ) {
-        switch (err) {
-            case ERR_OK:
-                return "tcp - no error";
+        const char* const TAG = "Pusher";
 
-            case ERR_MEM:
-                return "tcp - out of memory";
+        const char* translate(
+            const err_t err
+        ) {
+            switch (err) {
+                case ERR_OK:
+                    return "tcp - no error";
 
-            case ERR_BUF:
-                return "tcp - buffer error";
+                case ERR_MEM:
+                    return "tcp - out of memory";
 
-            case ERR_TIMEOUT:
-                return "tcp - timeout";
+                case ERR_BUF:
+                    return "tcp - buffer error";
 
-            case ERR_RTE:
-                return "tcp - routing problem";
+                case ERR_TIMEOUT:
+                    return "tcp - timeout";
 
-            case ERR_INPROGRESS:
-                return "tcp - in progress";
+                case ERR_RTE:
+                    return "tcp - routing problem";
 
-            case ERR_VAL:
-                return "tcp - illegal value";
+                case ERR_INPROGRESS:
+                    return "tcp - in progress";
 
-            case ERR_WOULDBLOCK:
-                return "tcp - operation would block";
+                case ERR_VAL:
+                    return "tcp - illegal value";
 
-            case ERR_USE:
-                return "tcp - address in use";
+                case ERR_WOULDBLOCK:
+                    return "tcp - operation would block";
 
-            case ERR_ALREADY:
-                return "tcp - already connecting";
+                case ERR_USE:
+                    return "tcp - address in use";
 
-            case ERR_ISCONN:
-                return "tcp - connection already established";
+                case ERR_ALREADY:
+                    return "tcp - already connecting";
 
-            case ERR_CONN:
-                return "tcp - not connected";
+                case ERR_ISCONN:
+                    return "tcp - connection already established";
 
-            case ERR_IF:
-                return "tcp - low-level netif error";
+                case ERR_CONN:
+                    return "tcp - not connected";
 
-            case ERR_ABRT:
-                return "tcp - connection aborted";
+                case ERR_IF:
+                    return "tcp - low-level netif error";
 
-            case ERR_RST:
-                return "tcp - connection reset";
+                case ERR_ABRT:
+                    return "tcp - connection aborted";
 
-            case ERR_CLSD:
-                return "tcp - connection closed";
+                case ERR_RST:
+                    return "tcp - connection reset";
 
-            case ERR_ARG:
-                return "tcp - illegal argument";
+                case ERR_CLSD:
+                    return "tcp - connection closed";
 
-            default:
-                return "tcp - unknown error";
+                case ERR_ARG:
+                    return "tcp - illegal argument";
+
+                default:
+                    return "tcp - unknown error";
+            }
         }
-    }
 
-    std::string header(
-        const char* addr,
-        const uint16_t port
-    ) {
+        std::string header(
+            const char* addr,
+            const uint16_t port
+        ) {
 
-        std::string buffer{};
-        buffer += "POST /api/put HTTP/1.1\nHost: ";
-        buffer += addr;
-        buffer += ':';
-        buffer += std::to_string(port);
-        buffer += "\nUser-Agent: homer2/";
-        buffer += std::to_string(HOMER2_VERSION_MAJOR);
-        buffer += '.';
-        buffer += std::to_string(HOMER2_VERSION_MINOR);
-        buffer +=
-            "\nAccept: */*\nContent-Type: application/json\nContent-Length: ";
+            std::string buffer{};
+            buffer += "POST /api/put HTTP/1.1\nHost: ";
+            buffer += addr;
+            buffer += ':';
+            buffer += std::to_string(port);
+            buffer += "\nUser-Agent: homer2/";
+            buffer += std::to_string(HOMER2_VERSION_MAJOR);
+            buffer += '.';
+            buffer += std::to_string(HOMER2_VERSION_MINOR);
+            buffer +=
+                "\nAccept: */*\nContent-Type: application/json\nContent-Length: ";
 
-        return std::move(buffer);
+            return std::move(buffer);
+        }
+
+        bool addr_is_already_resolved(
+            const char* addr
+        ) {
+            if (strlen(addr) == 0)
+                return false;
+
+            ip_addr_t ip{};
+            return ip4addr_aton(addr, &ip) == 1;
+        }
+
     }
 
 }
@@ -251,6 +265,7 @@ namespace homer2 {
             return;
     }
 
+    [[nodiscard]]
     bool Homer2Pusher::resolve() noexcept {
 
         if (this->_ip.addr != IPADDR_ANY && this->_ip.addr != IPADDR_NONE) {
@@ -259,6 +274,17 @@ namespace homer2 {
         }
 
         I(TAG, "resolving: " << this->_addr);
+        if (addr_is_already_resolved(this->_addr))
+            this->resolve_ip();
+        else
+            this->resolve_addr();
+
+        return false;
+    }
+
+    void Homer2Pusher::resolve_addr() noexcept {
+
+        D(4, TAG, "address is domain, resolving: " << this->_addr);
 
         const auto start = now();
 
@@ -294,14 +320,15 @@ namespace homer2 {
                     << this->_addr << " => " << this->ipAddr());
                 this->resetDnsErr();
             }
-                return false;
+                break;
 
-            case ERR_ARG:
+            case ERR_ARG: {
                 E(TAG, "invalid domain: " << this->_addr);
                 this->incDnsErr();
-                return false;
+            }
+                break;
 
-            case ERR_INPROGRESS:
+            case ERR_INPROGRESS: {
                 D(4, TAG, "dns resolver in progress");
 
                 while (IPADDR_ANY == this->_ip.addr)
@@ -313,16 +340,33 @@ namespace homer2 {
                     I(TAG, "resolved in "
                         << std::to_string(now() - start) << "ms: "
                         << this->_addr << " => " << this->ipAddr());
+            }
+                break;
 
-                return false;
-
-            default:
+            default: {
                 E(TAG, "unknown dns resolver error: " << std::to_string(lwip_err));
                 this->incDnsErr();
-                return false;
+            }
+                break;
         }
     }
 
+    void Homer2Pusher::resolve_ip() noexcept {
+
+        D(4, TAG, "address is ip, parsing: " << this->_addr);
+
+        ip_addr_t already{};
+        auto ok = ipaddr_aton(this->_addr, &already);
+
+        if (ok == 0) {
+            E(TAG, "bad ip: " << this->_addr);
+            return;
+        }
+
+        this->_ip.addr = already.addr;
+    }
+
+    [[nodiscard]]
     bool Homer2Pusher::open() noexcept {
 
         D(5, TAG, "opening tcp");
@@ -401,6 +445,7 @@ namespace homer2 {
         return true;
     }
 
+    [[nodiscard]]
     bool Homer2Pusher::connect() noexcept {
 
         D(5, TAG, "connecting tcp");
@@ -457,6 +502,7 @@ namespace homer2 {
 #pragma clang diagnostic pop
     }
 
+    [[nodiscard]]
     bool Homer2Pusher::write() noexcept {
 
         D(5, TAG, "writing tcp");
@@ -546,6 +592,7 @@ namespace homer2 {
     }
 
 
+    [[nodiscard]]
     const std::string& Homer2Pusher::ipAddr() noexcept {
 
         if (this->_ipStr.empty()) {

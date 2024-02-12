@@ -45,6 +45,10 @@ namespace homer2 {
         [[nodiscard]]
         bool resolve() noexcept;
 
+        void resolve_ip() noexcept;
+
+        void resolve_addr() noexcept;
+
         [[nodiscard]]
         bool open() noexcept;
 
