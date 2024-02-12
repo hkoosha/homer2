@@ -209,7 +209,8 @@ namespace {
                       std::make_unique<homer2::Homer2Pusher>(
                           homer2::net::victoria_addr(),
                           homer2::net::victoria_port(),
-                          homer2::net::victoria_metrics_frequency_millis()
+                          homer2::net::victoria_metrics_frequency_millis(),
+                          homer2::net::victoria_metrics_write_initial_delay_millis() + now()
                       )
                       : nullptr;
 

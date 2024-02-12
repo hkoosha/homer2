@@ -20,6 +20,8 @@ namespace homer2::net {
 
     uint64_t victoria_metrics_frequency_millis() noexcept;
 
+    uint64_t victoria_metrics_write_initial_delay_millis() noexcept;
+
     bool is_victoria_metrics_enabled() noexcept;
 
 }
