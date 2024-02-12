@@ -15,7 +15,7 @@ add_subdirectory(homer2_sensor)
 
 configure_file(src/homer2_config.h.in src/homer2_config.h)
 
-if ($ENV{HOMER2_VICTORIA_WRITE_INITIAL_DELAY_MILLIS_DISABLE} STREQUAL "true")
+if ("$ENV{HOMER2_VICTORIA_WRITE_INITIAL_DELAY_MILLIS_DISABLE}" STREQUAL "true")
     set(_HOMER2_VICTORIA_WRITE_INITIAL_DELAY_MILLIS_DISABLE true)
 else ()
     set(_HOMER2_VICTORIA_WRITE_INITIAL_DELAY_MILLIS_DISABLE false)
