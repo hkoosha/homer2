@@ -100,7 +100,7 @@ Serial output (after running for ~1.5 hour):
 Grafana:
 <br>
 
-![GrafanaDashboard](screenshots/grafana.png)
+![GrafanaDashboard](screenshots/grafana0.png)
 
 <br>
 
