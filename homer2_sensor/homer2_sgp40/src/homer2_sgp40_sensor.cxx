@@ -90,7 +90,10 @@ namespace homer2::sensor::sgp40::internal::sensor {
     }
 
     SGP40Sensor::SGP40Sensor(
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "UnusedParameter"
         std::shared_ptr<i2c::Homer2I2c> i2c
+#pragma clang diagnostic pop
     ) noexcept:
         _i2c{
             I2cConnection{
@@ -113,7 +116,7 @@ namespace homer2::sensor::sgp40::internal::sensor {
     [[nodiscard]]
     int32_t SGP40Sensor::getVocIndex() const noexcept {
 
-        return this->_rawIndex;
+        return this->_vocIndex;
     }
 
     [[nodiscard]]
@@ -186,18 +189,20 @@ namespace homer2::sensor::sgp40::internal::sensor {
         this->_i2c[6] = temperatureTicks & 0xFF;
         this->_i2c[7] = calculate_crc(this->_i2c[5], this->_i2c[6]);
 
-        const auto result = this->_i2c.write(8);
+        const Homer2I2cError result = this->_i2c.write(8);
         if (Homer2I2cError::no_error != result) {
             this->_dataReadyAtMillis = 0;
             E(TAG, "failed to request measurement: " << result);
             throw std::runtime_error{"SGP40: failed to request measurement"};
         }
 
-        this->_dataReadyAtMillis = nowMillis + (MEASUREMENT_DURATION_MILLIS / 1000) + 1;
+        this->_dataReadyAtMillis = nowMillis + MEASUREMENT_DURATION_MILLIS + 1;
 
-        D(3, TAG, "measurement to be ready at: " << nowMillis << " + "
-                                                 << MEASUREMENT_DURATION_MILLIS << " = "
-                                                 << this->_dataReadyAtMillis << "ms");
+        D(3, TAG, "measurement to be ready at: " << std::to_string(nowMillis) << " + "
+                                                 << std::to_string(MEASUREMENT_DURATION_MILLIS + 1)
+                                                 << " = "
+                                                 << std::to_string(this->_dataReadyAtMillis)
+                                                 << "ms");
     }
 
     bool SGP40Sensor::doReadMeasurement() {
@@ -205,14 +210,14 @@ namespace homer2::sensor::sgp40::internal::sensor {
         D(3, TAG, "measurement ready, reading");
         this->_dataReadyAtMillis = 0;
 
-        const auto result = this->_i2c.read(2);
+        const auto result = this->read(1);
         if (Homer2I2cError::no_error != result) {
             this->_dataReadyAtMillis = 0;
             E(TAG, "failed to read measurement: " << result);
             throw std::runtime_error{"SGP40: failed to read measurement measurement"};
         }
 
-        this->_rawIndex = this->convertToUInt16();
+        this->_rawIndex = this->convertToUInt16(0);
 
         VocAlgorithm_process(
             &this->_vocAlgorithmParams,
@@ -220,7 +225,7 @@ namespace homer2::sensor::sgp40::internal::sensor {
             &this->_vocIndex
         );
 
-        D(5, TAG, "raw index: " << this->_rawIndex << ", voc index: " << this->_vocIndex);
+        D(4, TAG, "raw index: " << this->_rawIndex << ", voc index: " << this->_vocIndex);
         return true;
     }
 
@@ -390,17 +395,13 @@ namespace homer2::sensor::sgp40::internal::sensor {
         D(3, TAG, "self test ready, reading");
         this->_dataReadyAtMillis = 0;
 
-        const auto result = this->_i2c.read(3);
-
+        const auto result = this->read(1);
         if (Homer2I2cError::no_error != result) {
             E(TAG, "failed to read self test: " << result);
             throw std::runtime_error{"SGP40: failed to read self test"};
         }
 
-        if (!check_crc(this->_i2c, 3))
-            throw std::runtime_error{"SGP40: crc mismatch for self test"};
-
-        const auto readBack = this->convertToUInt16();
+        const auto readBack = this->convertToUInt16(0);
         this->_selfTestOk = readBack == SELF_TEST_REPLY;
 
         return true;
@@ -469,8 +470,16 @@ namespace homer2::sensor::sgp40::internal::sensor {
             throw std::runtime_error{"SGP40: failed to read serial number"};
         }
 
-        for (int i = 0; i < 6; i++)
-            this->_serialNumber[i] = this->_i2c[i];
+        const auto v0 = this->convertToUInt16(0);
+        const auto v1 = this->convertToUInt16(1);
+        const auto v2 = this->convertToUInt16(2);
+
+        this->_serialNumber[0] = static_cast<uint8_t>(v0 >> 8);
+        this->_serialNumber[1] = static_cast<uint8_t>(v0 & 0xFF);
+        this->_serialNumber[2] = static_cast<uint8_t>(v1 >> 8);
+        this->_serialNumber[3] = static_cast<uint8_t>(v1 & 0xFF);
+        this->_serialNumber[4] = static_cast<uint8_t>(v2 >> 8);
+        this->_serialNumber[5] = static_cast<uint8_t>(v2 & 0xFF);
 
         D(5, TAG, "serial number: 0x"
             << std::hex
@@ -555,14 +564,14 @@ namespace homer2::sensor::sgp40::internal::sensor {
         D(3, TAG, "feature set ready, reading");
         this->_dataReadyAtMillis = 0;
 
-        const auto result = this->_i2c.read(2);
+        const auto result = this->read(1);
         if (Homer2I2cError::no_error != result) {
             this->_dataReadyAtMillis = 0;
             E(TAG, "failed to read feature set: " << result);
             throw std::runtime_error{"SGP40: failed to read feature set"};
         }
 
-        this->_featureSet = this->convertToUInt16();
+        this->_featureSet = this->convertToUInt16(0);
 
         D(5, TAG, "feature set: " << std::hex << this->_featureSet);
         return true;

@@ -109,7 +109,7 @@ namespace homer2::sensor::sgp40::internal::sensor {
         bool doReadFeatureSet();
 
         [[nodiscard]]
-        uint16_t convertToUInt16(size_t index = 0);
+        uint16_t convertToUInt16(size_t index);
 
         [[nodiscard]]
         i2c::Homer2I2cError read(size_t len) noexcept;
