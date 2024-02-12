@@ -4,21 +4,25 @@ namespace homer2::logging {
 
     namespace internal {
 
+#if HOMER2_LOG_USE_MUTEX
         mutex_t homer2_logging_mutex;
 
         void enter() {
 
-#if HOMER2_LOG_USE_MUTEX
             mutex_enter_blocking(&homer2_logging_mutex);
-#endif
         }
 
         void exit() {
 
-#if HOMER2_LOG_USE_MUTEX
             mutex_exit(&homer2_logging_mutex);
-#endif
         }
+#else
+        void enter() {
+        }
+
+        void exit() {
+        }
+#endif
 
         void print_time(
             const uint64_t nowUs
@@ -64,10 +68,12 @@ namespace homer2::logging {
 
     void init() {
 
+#if HOMER2_LOG_USE_MUTEX
         if (mutex_is_initialized(&internal::homer2_logging_mutex))
             panic("logging mutex already initialized");
 
         mutex_init(&internal::homer2_logging_mutex);
+#endif
     }
 
 }

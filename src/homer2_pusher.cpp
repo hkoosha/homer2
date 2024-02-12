@@ -577,19 +577,23 @@ namespace homer2 {
 
         if (this->_tcpPcb != nullptr) {
 
+            D(4, TAG, "closing tcp");
+
+            cyw43_arch_lwip_begin();
             tcp_arg(this->_tcpPcb, nullptr);
             tcp_poll(this->_tcpPcb, nullptr, 0);
             tcp_sent(this->_tcpPcb, nullptr);
             tcp_recv(this->_tcpPcb, nullptr);
             tcp_err(this->_tcpPcb, nullptr);
-
-            D(4, TAG, "closing tcp");
             const auto err = tcp_close(this->_tcpPcb);
+            cyw43_arch_lwip_end();
 
             if (ERR_OK != err) {
                 E(TAG, "failed to close tcp connection, aborting: " << translate(err));
                 this->incTcpErr();
+                cyw43_arch_lwip_begin();
                 tcp_abort(this->_tcpPcb);
+                cyw43_arch_lwip_end();
                 this->_tcpPcb = nullptr;
                 return ERR_ABRT;
             }
