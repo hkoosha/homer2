@@ -103,9 +103,6 @@
 #ifndef HOMER2_SHT4X_I2C_ALT_ADDR
 #    define HOMER2_SHT4X_I2C_ALT_ADDR false
 #endif
-#ifndef HOMER2_SHT4X_HEATER_CONF
-#    define HOMER2_SHT4X_HEATER_CONF HeaterConf::off
-#endif
 #ifndef HOMER2_SHT4X_PRECISION_CONF
 #    define HOMER2_SHT4X_PRECISION_CONF Precision::high
 #endif

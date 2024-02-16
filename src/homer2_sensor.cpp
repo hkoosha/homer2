@@ -187,7 +187,7 @@ namespace homer2 {
         sensor
             ->setAltAddress(HOMER2_SHT4X_I2C_ALT_ADDR)
             ->setPrecision(HOMER2_SHT4X_PRECISION_CONF)
-            ->setHeaterConf(HOMER2_SHT4X_HEATER_CONF);
+            ->setHeaterConf(HeaterConf::off);
 
         return sensor;
     }
